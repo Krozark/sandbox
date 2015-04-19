@@ -34,11 +34,11 @@ class Test
                 luabind::class_<Test>("Test")
                 .def(luabind::constructor<int>())
                 .def("print",&Test::print)
+                .def_readwrite("_i",&Test::_i)
                 ];
         }
 
 
-    private:
         int _i;
 };
 
