@@ -11,7 +11,7 @@ namespace event
         public:
             Event(const Event<T>&) = default;
             Event& operator=(const Event<T>&) = default;
-        
+
             Event(){};
             ~Event(){};
 
@@ -20,8 +20,6 @@ namespace event
                 static unsigned int family = VEvent::_familyCounter++;
                 return family;
             };
-
-            //void emit();
 
         private:
     };
