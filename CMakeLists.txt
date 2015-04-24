@@ -14,7 +14,7 @@ set(VERSION_PATCH 0)
 
 
 # add the  header path
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ideas)
 
 # add an option for building the API documentation
 set_option(LAB_BUILD_DOC TRUE BOOL "TRUE to generate the API documentation, FALSE to ignore it")
