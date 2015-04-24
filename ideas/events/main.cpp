@@ -6,12 +6,12 @@
 #include <events/EventHandler.hpp>
 #include <events/Emitter.hpp>
 
-class Event : event::Event<Event>
+class TestEvent : public event::Event<TestEvent>
 {
     public:
-        Event(int i, std::string str) : _i(i), _str(str){};
+        TestEvent(int i, std::string str) : _i(i), _str(str){};
 
-        friend std::ostream& operator<<(std::ostream& stream,const Event& self)
+        friend std::ostream& operator<<(std::ostream& stream,const TestEvent& self)
         {
             stream<<"family= "<<self.family()<<", _i= "<<self._i<<", _str= "<<self._str;
             return stream;
@@ -22,67 +22,126 @@ class Event : event::Event<Event>
         std::string _str;
 };
 
+class HandlerClass : public event::EventHandler<TestEvent>
+{
+    public:
+        void onEvent(TestEvent& event)
+        {
+            std::cout<<"HandlerClass::onEvent("<<event<<")"<<std::endl;
+        }
+
+         HandlerClass() : EventHandler(HandlerClass::onEvent)
+        {
+        };
+};
+
+namespace event
+{
+    class EventBus
+    {
+        public:
+
+            template<typename T>
+            void connect(EventHandler<T>& handler)
+            {
+                static_assert(std::is_base_of<Event<T>,T>::value, "EventBus::connect<T>(EventHandler<T>&): T must be a class derived from Event<T>");
+                std::cout<<"EventBus::connect("<<T::family()<<")"<<std::endl;
+            }
+
+            template<typename T>
+            void connect(EventHandler<T>& handler,const std::function<void(T& event)>& callback)
+            {
+                static_assert(std::is_base_of<Event<T>,T>::value, "EventBus::connect<T>(EventHandler<T>&): T must be a class derived from Event<T>");
+                std::cout<<"EventBus::connect("<<T::family()<<",callback)"<<std::endl;
+            }
+
+            template<typename T>
+            void emit(T& event)
+            {
+                static_assert(std::is_base_of<Event<T>,T>::value, "EventBus::emit(T&): T must be a class derived from Event<T>");
+                std::cout<<"EventBus::emit("<<T::family()<<")"<<std::endl;
+            }
+    };
+}
+
 int main(int argc,char* argv[])
 {
     //object to object link
-    {
-        Event event(42,"Event");
+    /*{
+        TestEvent event(42,"TestEvent");
         std::cout<<event<<std::endl;
 
-        event::EventHandler<Event> handler;
-        event::Emitter<Event> emiter;
-        {
-            std::cout<<"------ handler receive nothing ------"<<std::endl;
+        event::EventHandler<TestEvent> handler([](TestEvent& event){
+            std::cout<<"handler default function: "<<event<<std::endl;
+        });
+        event::Emitter<TestEvent> emitter1;
 
+        {
+            std::cout<<std::endl<<"------ handler should receive nothing ------"<<std::endl;
 
             std::cout<<"-- emit by &ref "<<std::endl;
-            emiter.emit(event); //&ref
+            emitter1.emit(event);
             std::cout<<"-- emit by construction "<<std::endl;
-            emiter.emit(72,"pwet"); //emplace
+            emitter1.emit(72,"pwet");
             std::cout<<"-- emit by &&ref "<<std::endl;
-            emiter.emit(Event(48,"pwet 2")); //&&ref
+            emitter1.emit(TestEvent(48,"pwet 2"));
         }
 
         {
-            std::cout<<"------ handler receive events ------"<<std::endl;
-            handler.connect(emiter);
-            emiter.emit(event); //&ref
+            std::cout<<std::endl<<"------ handler should receive events ------"<<std::endl;
+            handler.connect(emitter1);
+            emitter1.emit(event);
         }
 
         {
-            std::cout<<"------ handler receive nothing ------"<<std::endl;
-            handler.disconnect(emiter);
-            emiter.emit(event); //&ref
+            std::cout<<std::endl<<"------ handler should receive nothing ------"<<std::endl;
+            handler.disconnect(emitter1);
+            emitter1.emit(event);
         }
 
         {
-            std::cout<<"------ handler receive events ------"<<std::endl;
-            event::EventHandler<Event> handler2;
-            handler.connect(emiter);
-            handler2.connect(emiter);
-            emiter.emit(event); //&ref
+            std::cout<<std::endl<<"------ handlers 1,2 should receive events ------"<<std::endl;
+            event::EventHandler<TestEvent> handler2;
 
+            event::Emitter<TestEvent> emitter2;
+
+            handler.connect(emitter1);
+
+            handler2.connect(emitter1,[](TestEvent& event){
+                std::cout<<"handler2 from emitter1: "<<event<<std::endl;
+            });
+            handler2.connect(emitter2,[](TestEvent& event){
+                std::cout<<"handler2 from emitter2: "<<event<<std::endl;
+            });
+            emitter1.emit(event);
+            emitter2.emit(event);
         }
 
-        /*handler.connect(emiter,std::function<void(Event&)>{
-                        });
+        {
+            std::cout<<std::endl<<"------ handlers class should receive events ------"<<std::endl;
 
-        handler.connect(emiter,[](Event&){
+            HandlerClass handlerClass;
+            handlerClass.connect(emitter1);
 
-        });
-        */
-    }
+            emitter1.emit(event);
+        }
+    }*/
 
     //event throught bus
-    /*{
-        Event event(67,"Event 2");
-        event::EventHandler<Event> handler;
+    {
+        TestEvent event(67,"Event 2");
+        event::EventHandler<TestEvent> handler([](TestEvent& event){
+            std::cout<<"handler default function: "<<event<<std::endl;
+        });
 
         event::EventBus bus;
-        bus.register<Event>(handler);
+        bus.connect<TestEvent>(handler);
+        bus.connect<TestEvent>(handler,[](TestEvent& event){
+            std::cout<<"bus connect function: "<<event<<std::endl;
+       });
 
         bus.emit(event);
-    }*/
+    }
 
 
 

@@ -1,8 +1,9 @@
 #ifndef EVENT_EVENTHANDLER_HPP
 #define EVENT_EVENTHANDLER_HPP
 
-#include <list>
+#include <unordered_map>
 #include <type_traits>
+#include <functional>
 
 namespace event
 {
@@ -13,21 +14,30 @@ namespace event
     {
         public:
 
-            EventHandler();
+            using FuncType = std::function<void(T&)>;
+
+            EventHandler(const FuncType& callback = [](T&){/*do nothing*/});
+
+            template<typename U>
+            EventHandler(void (U::*method)(T&) );
+
             virtual ~EventHandler();
 
             void connect(Emitter<T>& emitter);
+            void connect(Emitter<T>& emitter,const FuncType& callback);
             void disconnect(Emitter<T>& emitter);
 
         private:
             friend class Emitter<T>;
 
-            virtual void _onEvent(T&);
+            void _register(Emitter<T>* emitter);
+            void _register(Emitter<T>* emitter,const FuncType& callback);
+            void _unregister(Emitter<T>* emitter);
 
-            void _register(Emitter<T>& emitter);
-            void _unregister(Emitter<T>& emitter);
+            void exec(Emitter<T>*emitter,T& event);
 
-            std::list<Emitter<T>*> _emitters;
+            std::unordered_map<Emitter<T>*,const FuncType> _emitters;
+            const FuncType _callback;
     };
 }
 
@@ -37,48 +47,70 @@ namespace event
 namespace event
 {
     template<typename T>
-    EventHandler<T>::EventHandler()
+    EventHandler<T>::EventHandler(const std::function<void(T&)>& callback) : _callback(callback)
     {
         static_assert(std::is_base_of<Event<T>,T>::value, "EventHandler<T>: T must be a class derived from Event<T>");
+    }
+    template<typename T>
+    template<typename U>
+    EventHandler<T>::EventHandler(void (U::*method)(T&) ) :
+        EventHandler(std::bind(method,static_cast<U*>(this),std::placeholders::_1))
+    {
+        static_assert(std::is_base_of<EventHandler<T>,U>::value, "EventHandler<T>: the method as parameter must be from a class derived from EventHandler<T>");
     }
 
     template<typename T>
     EventHandler<T>::~EventHandler()
     {
         for(auto&& emitter : _emitters)
-            emitter->_unregister(*this);
+            emitter.first->_unregister(this);
     }
 
     template<typename T>
     void EventHandler<T>::connect(Emitter<T>& emitter)
     {
-        emitter._register(*this);
-        _register(emitter);
+        emitter._register(this);
+        _register(&emitter);
+    }
+
+    template<typename T>
+    void EventHandler<T>::connect(Emitter<T>& emitter,const FuncType& callback)
+    {
+        emitter._register(this);
+        _register(&emitter,callback);
     }
 
     template<typename T>
     void EventHandler<T>::disconnect(Emitter<T>& emitter)
     {
-        emitter._unregister(*this);
-        _unregister(emitter);
+        emitter._unregister(this);
+        _unregister(&emitter);
     }
 
     template<typename T>
-    void EventHandler<T>::_register(Emitter<T>& emitter)
+    void EventHandler<T>::_register(Emitter<T>* emitter)
     {
-        _emitters.emplace_back(&emitter);
+        _emitters.emplace(emitter,_callback);
     }
 
     template<typename T>
-    void EventHandler<T>::_unregister(Emitter<T>& emitter)
+    void EventHandler<T>::_register(Emitter<T>* emitter,const FuncType& callback)
     {
-        _emitters.remove(&emitter);
+        _emitters.emplace(emitter,callback);
     }
 
     template<typename T>
-    void EventHandler<T>::_onEvent(T& e)
+    void EventHandler<T>::_unregister(Emitter<T>* emitter)
     {
-        std::cout<<"EventHandler::onEvent("<<typeid(T).name()<<")"<<std::endl;
+        auto search = _emitters.find(emitter);
+        if(search != _emitters.end())
+            _emitters.erase(search);
+    }
+
+    template<typename T>
+    void EventHandler<T>::exec(Emitter<T>* emitter,T& event)
+    {
+        _emitters.at(emitter)(event);
     }
 }
 #endif

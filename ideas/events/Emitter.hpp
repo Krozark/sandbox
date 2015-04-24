@@ -30,8 +30,8 @@ namespace event
         private:
             friend class EventHandler<T>;
 
-            void _register(EventHandler<T>& handler);
-            void _unregister(EventHandler<T>& handler);
+            void _register(EventHandler<T>* handler);
+            void _unregister(EventHandler<T>* handler);
 
             std::list<EventHandler<T>*> _handlers;
     };
@@ -51,7 +51,7 @@ namespace event
     Emitter<T>::~Emitter()
     {
         for(auto&& handler : _handlers)
-            handler->_unregister(*this);
+            handler->_unregister(this);
         _handlers.clear();
     }
 
@@ -60,7 +60,7 @@ namespace event
     {
         std::cout<<"Emiter::emit(&"<<event<<")"<<std::endl;
         for(auto&& handler : _handlers)
-            handler->_onEvent(event);
+            handler->exec(this,event);
     }
 
     template<typename T>
@@ -83,27 +83,27 @@ namespace event
     template<typename T>
     void Emitter<T>::connect(EventHandler<T>& handler)
     {
-         handler._register(*this);
-        _register(handler);
+         handler._register(this);
+        _register(&handler);
     }
 
     template<typename T>
     void Emitter<T>::disconnect(EventHandler<T>& handler)
     {
-        handler._unregister(*this);
-        _unregister(handler);
+        handler._unregister(this);
+        _unregister(&handler);
     }
 
     template<typename T>
-    void Emitter<T>::_register(EventHandler<T>& handler)
+    void Emitter<T>::_register(EventHandler<T>* handler)
     {
-        _handlers.emplace_back(&handler);
+        _handlers.emplace_back(handler);
     }
 
     template<typename T>
-    void Emitter<T>::_unregister(EventHandler<T>& handler)
+    void Emitter<T>::_unregister(EventHandler<T>* handler)
     {
-        _handlers.remove(&handler);
+        _handlers.remove(handler);
     }
 }
 
