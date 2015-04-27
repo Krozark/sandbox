@@ -5,12 +5,15 @@
 #include <type_traits>
 #include <functional>
 
+#include <events/VEventHandler.hpp>
+
 namespace event
 {
     template<typename T> class Emitter;
+    class EventBus;
 
     template<typename T>
-    class EventHandler
+    class EventHandler : public priv::VEventHandler
     {
         public:
 
@@ -29,12 +32,14 @@ namespace event
 
         private:
             friend class Emitter<T>;
+            friend class EventBus;
 
             void _register(Emitter<T>* emitter);
             void _register(Emitter<T>* emitter,const FuncType& callback);
             void _unregister(Emitter<T>* emitter);
 
             void exec(Emitter<T>*emitter,T& event);
+            void exec(T& event);
 
             std::unordered_map<Emitter<T>*,const FuncType> _emitters;
             const FuncType _callback;
@@ -47,7 +52,7 @@ namespace event
 namespace event
 {
     template<typename T>
-    EventHandler<T>::EventHandler(const std::function<void(T&)>& callback) : _callback(callback)
+    EventHandler<T>::EventHandler(const std::function<void(T&)>& callback) : VEventHandler(T::family()), _callback(callback)
     {
         static_assert(std::is_base_of<Event<T>,T>::value, "EventHandler<T>: T must be a class derived from Event<T>");
     }
@@ -112,5 +117,12 @@ namespace event
     {
         _emitters.at(emitter)(event);
     }
+
+    template<typename T>
+    void EventHandler<T>::exec(T& event)
+    {
+        _callback(event);
+    }
+
 }
 #endif

@@ -1,10 +1,10 @@
 #include <string>
 #include <iostream>
-#include <list>
 
 #include <events/Event.hpp>
 #include <events/EventHandler.hpp>
 #include <events/Emitter.hpp>
+#include <events/EventBus.hpp>
 
 class TestEvent : public event::Event<TestEvent>
 {
@@ -30,39 +30,11 @@ class HandlerClass : public event::EventHandler<TestEvent>
             std::cout<<"HandlerClass::onEvent("<<event<<")"<<std::endl;
         }
 
-         HandlerClass() : EventHandler(HandlerClass::onEvent)
+         HandlerClass() : EventHandler(&HandlerClass::onEvent)
         {
         };
 };
 
-namespace event
-{
-    class EventBus
-    {
-        public:
-
-            template<typename T>
-            void connect(EventHandler<T>& handler)
-            {
-                static_assert(std::is_base_of<Event<T>,T>::value, "EventBus::connect<T>(EventHandler<T>&): T must be a class derived from Event<T>");
-                std::cout<<"EventBus::connect("<<T::family()<<")"<<std::endl;
-            }
-
-            template<typename T>
-            void connect(EventHandler<T>& handler,const std::function<void(T& event)>& callback)
-            {
-                static_assert(std::is_base_of<Event<T>,T>::value, "EventBus::connect<T>(EventHandler<T>&): T must be a class derived from Event<T>");
-                std::cout<<"EventBus::connect("<<T::family()<<",callback)"<<std::endl;
-            }
-
-            template<typename T>
-            void emit(T& event)
-            {
-                static_assert(std::is_base_of<Event<T>,T>::value, "EventBus::emit(T&): T must be a class derived from Event<T>");
-                std::cout<<"EventBus::emit("<<T::family()<<")"<<std::endl;
-            }
-    };
-}
 
 int main(int argc,char* argv[])
 {
@@ -129,16 +101,17 @@ int main(int argc,char* argv[])
 
     //event throught bus
     {
+        event::EventBus bus;
+
         TestEvent event(67,"Event 2");
         event::EventHandler<TestEvent> handler([](TestEvent& event){
             std::cout<<"handler default function: "<<event<<std::endl;
         });
 
-        event::EventBus bus;
         bus.connect<TestEvent>(handler);
-        bus.connect<TestEvent>(handler,[](TestEvent& event){
+        /*bus.connect<TestEvent>(handler,[](TestEvent& event){
             std::cout<<"bus connect function: "<<event<<std::endl;
-       });
+       });*/
 
         bus.emit(event);
     }
