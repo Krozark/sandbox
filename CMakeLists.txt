@@ -20,7 +20,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ideas)
 set_option(LAB_BUILD_DOC TRUE BOOL "TRUE to generate the API documentation, FALSE to ignore it")
 
 set_option(LAB_BUILD_LUA TRUE BOOL "TRUE to generate LUA tests, FALSE to ignore it")
-set_option(LAB_BUILD_EVENTS TRUE BOOL "TRUE to generate LUA tests, FALSE to ignore it")
 
 set(LIBS "")
 
