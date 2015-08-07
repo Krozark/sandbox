@@ -15,11 +15,14 @@ set(VERSION_PATCH 0)
 
 # add the  header path
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ideas)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules;${CMAKE_SOURCE_DIR}")
 
 # add an option for building the API documentation
 set_option(LAB_BUILD_DOC TRUE BOOL "TRUE to generate the API documentation, FALSE to ignore it")
 
 set_option(LAB_BUILD_LUA TRUE BOOL "TRUE to generate LUA tests, FALSE to ignore it")
+
+set_option(LAB_BUILD_SFML TRUE BOOL "TRUE to generate SFML tests, FALSE to ignore it")
 
 set(LIBS "")
 
