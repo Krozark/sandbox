@@ -24,6 +24,8 @@ set_option(LAB_BUILD_LUA TRUE BOOL "TRUE to generate LUA tests, FALSE to ignore 
 
 set_option(LAB_BUILD_SFML TRUE BOOL "TRUE to generate SFML tests, FALSE to ignore it")
 
+set_option(LAB_BUILD_SHADOWS TRUE BOOL "TRUE to generate shadow tests, FALSE to ignore it")
+
 set(LIBS "")
 
 set(DEFINES "")
