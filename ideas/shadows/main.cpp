@@ -85,6 +85,7 @@ int main(int argc, char* argv[])
 
         // Clear screen and depth buffer
         window.clear();
+        window.pushGLStates();
 
         glLoadIdentity();
         lightSystem.RenderLights();
@@ -100,6 +101,7 @@ int main(int argc, char* argv[])
         Draw2DQuad(testImage, 1.0f);
 
         // Update screen
+        window.popGLStates();
         window.display();
 
     }
