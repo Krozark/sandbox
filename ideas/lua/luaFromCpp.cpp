@@ -17,7 +17,7 @@ int main(int argc,char * argv[])
     luaL_openlibs(state);
     luabind::open(state);
 
-    luaL_dofile(state,"luaFromCpp.lua");
+    luaL_dofile(state,"lua/luaFromCpp.lua");
 
 
     int i = luabind::call_function<int>(state, "Test",42);

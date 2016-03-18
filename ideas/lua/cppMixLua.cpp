@@ -52,7 +52,7 @@ int main(int argc,char * argv[])
 
     CppTest::registerToLua(state);
 
-    luaL_dofile(state,"cppMixLua.lua");
+    luaL_dofile(state,"lua/cppMixLua.lua");
 
     int i = luabind::call_function<int>(state, "Test",42);
     std::cout<<i<<std::endl;

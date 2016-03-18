@@ -59,7 +59,7 @@ int main(int argc,char * argv[])
     Test::registerToLua(state);
 
 
-    luaL_dofile(state,"cppFromLua.lua");
+    luaL_dofile(state,"lua/cppFromLua.lua");
     
 
     lua_close(state);
