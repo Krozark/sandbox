@@ -1,4 +1,4 @@
-#include "SDLOpenGL.h"
+#include "SFMLOpenGL.h"
 
 #include <iostream>
 

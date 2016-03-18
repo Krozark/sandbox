@@ -1,7 +1,7 @@
 #ifndef ALL_INCLUDE
 #define ALL_INCLUDE
 
-#include "SDLOpenGL.h"
+#include "SFMLOpenGL.h"
 #include "Utilities.h"
 
 #include "Light.h"

@@ -1,7 +1,7 @@
 #ifndef CONVEX_HULL_H
 #define CONVEX_HULL_H
 
-#include "SDLOpenGL.h"
+#include "SFMLOpenGL.h"
 #include "Utilities.h"
 #include "Constructs.h"
 #include <vector>

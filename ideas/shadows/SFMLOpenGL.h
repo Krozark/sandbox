@@ -2,6 +2,7 @@
 #define SDLOPENGL
 
 #include <SFML/OpenGL.hpp>
+#include <GL/glu.h>
 #include <SFML/Graphics.hpp>
 
 #include "Constructs.h"

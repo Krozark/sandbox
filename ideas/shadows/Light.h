@@ -1,7 +1,7 @@
 #ifndef LIGHT_H
 #define LIGHT_H
 
-#include "SDLOpenGL.h"
+#include "SFMLOpenGL.h"
 #include "Utilities.h"
 #include "Constructs.h"
 

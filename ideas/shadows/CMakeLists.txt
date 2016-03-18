@@ -22,8 +22,8 @@ add_executable(sfml-shadows
     LightSystem.cpp
     LightSystem.h
     main.cpp
-    SDLOpenGL.cpp
-    SDLOpenGL.h
+    SFMLOpenGL.cpp
+    SFMLOpenGL.h
     Utilities.cpp
     Utilities.h
 )
