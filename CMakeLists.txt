@@ -26,6 +26,8 @@ set_option(LAB_BUILD_SFML TRUE BOOL "TRUE to generate SFML tests, FALSE to ignor
 
 set_option(LAB_BUILD_SHADOWS TRUE BOOL "TRUE to generate shadow tests, FALSE to ignore it")
 
+set_option(LAB_BUILD_POCKETSPHINX TRUE BOOL "True to generate pocketsphinx, FALSE to ignore it")
+
 set(LIBS "")
 
 set(DEFINES "")

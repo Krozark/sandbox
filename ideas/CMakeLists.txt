@@ -9,3 +9,7 @@ endif()
 if(LAB_BUILD_SHADOWS)
     add_subdirectory(shadows)
 endif()
+
+if(LAB_BUILD_POCKETSPHINX)
+    add_subdirectory(pocketsphinx)
+endif()
