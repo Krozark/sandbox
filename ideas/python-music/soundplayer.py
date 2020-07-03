@@ -7,6 +7,7 @@ from pydub.utils import get_player_name
 import time
 from enum import Enum
 import threading
+from collections import defaultdict
 
 l = logging.getLogger("pydub.converter")
 l.setLevel(logging.DEBUG)
@@ -22,14 +23,31 @@ class STATUS(Enum):
     PAUSED = 3
 
 
-class Sound(object):
+class StatusObject(object):
+    def __init__(self):
+        self._status = STATUS.STOPPED
+
+    def status(self):
+        return self._status
+
+    def play(self):
+        self._status = STATUS.PLAYING
+
+    def pause(self):
+        self._status = STATUS.PAUSED
+
+    def stop(self):
+        self._status = STATUS.STOPPED
+
+
+class Sound(StatusObject):
     FFPLAY_PLAYER = get_player_name()
 
     def __init__(self, segment):
+        super().__init__()
         self._segment = segment
         self._tmp_file = None
         self._popen = None
-        self._status = STATUS.STOPPED
 
     def __del__(self):
         if self._popen:
@@ -46,11 +64,10 @@ class Sound(object):
     def _create_popen(self):
         self._popen = subprocess.Popen([self.FFPLAY_PLAYER, "-nodisp", "-autoexit", "-hide_banner", self._tmp_file.name])
 
-    def status(self):
-        return self._status
-
     def play(self):
-        if self._status not in (STATUS.STOPPED, STATUS.PAUSED):
+        if self.status() == STATUS.PLAYING:
+            return
+        elif self._status not in (STATUS.STOPPED, STATUS.PAUSED):
             raise Exception()
 
         if self._tmp_file is None:
@@ -61,7 +78,7 @@ class Sound(object):
         elif self._status == STATUS.PAUSED:
             self._popen.send_signal(signal.SIGCONT)
 
-        self._status = STATUS.PLAYING
+        super().play()
 
     def wait(self, timeout=None):
         code = self._popen.wait(timeout=timeout)
@@ -84,7 +101,7 @@ class Sound(object):
             raise Exception()
 
         self._popen.send_signal(signal.SIGSTOP)
-        self._status = STATUS.PAUSED
+        super().pause()
 
     def stop(self):
         if self._status != STATUS.PLAYING:
@@ -97,7 +114,7 @@ class Sound(object):
         if self._tmp_file:
             self._tmp_file.close()
 
-        self._status = STATUS.STOPPED
+        super().stop()
 
 
 # song = AudioSegment.from_ogg("music.ogg")
@@ -117,14 +134,14 @@ class Sound(object):
 # time.sleep(5)
 
 
-class Playlist(object):
+class Playlist(StatusObject):
     def __init__(self, concurency=1):
+        super().__init__()
         self._concurency = concurency
         self._queue_waiting = []
         self._queue_current = []
         self._thread = None
         self._lock = threading.Lock()
-        self._status = STATUS.STOPPED
 
     def enqueue(self, sound):
         with self._lock:
@@ -137,13 +154,13 @@ class Playlist(object):
             self._queue_current.clear()
 
     def pause(self):
-        self._status = STATUS.PAUSED
+        super().pause()
         with self._lock:
             for sound in self._queue_current:
                 sound.pause()
 
     def stop(self):
-        self._status = STATUS.STOPPED
+        super().stop()
         with self._lock:
             for sound in self._queue_current:
                 sound.stop()
@@ -151,6 +168,7 @@ class Playlist(object):
         self.clear()
 
     def play(self):
+        super().play()
         if self._thread is None:
             logger.debug("Create playlist Thread")
             self._thread = threading.Thread(target=self._thread_task, daemon=True)
@@ -160,11 +178,11 @@ class Playlist(object):
         with self._lock:
             for sound in self._queue_current:
                 sound.play()
-        self._status = STATUS.PLAYING
 
     def _thread_task(self):
         logger.debug("In playlist Thread")
         while self._status != STATUS.STOPPED:
+            logger.debug("Thread loop")
             if self._status == STATUS.PLAYING:
                 with self._lock:
                     i = 0
@@ -186,11 +204,75 @@ class Playlist(object):
         self._thread = None
 
 
-pl = Playlist(concurency=2)
-pl.enqueue(Sound(AudioSegment.from_wav("coin.wav")))
-pl.enqueue(Sound(AudioSegment.from_ogg("music.ogg")))
-pl.enqueue(Sound(AudioSegment.from_wav("coin.wav")))
-pl.enqueue(Sound(AudioSegment.from_wav("coin.wav")))
+# pl = Playlist(concurency=2)
+# pl.enqueue(Sound(AudioSegment.from_wav("coin.wav")))
+# pl.enqueue(Sound(AudioSegment.from_ogg("music.ogg")))
+# pl.enqueue(Sound(AudioSegment.from_wav("coin.wav")))
+# pl.enqueue(Sound(AudioSegment.from_wav("coin.wav")))
+#
+# pl.play()
+# time.sleep(100)
 
-pl.play()
-time.sleep(100)
+
+class SoundPlayer(StatusObject):
+    def __init__(self):
+        super().__init__()
+        self._playlists = defaultdict(Playlist)
+
+    def enqueue(self, sound, playlist):
+        if not playlist in self._playlists:
+            if self._status == STATUS.PLAYING:
+                self._playlists[playlist].play()
+            elif self._status == STATUS.PAUSED:
+                self._playlists[playlist].pause()
+        self._playlists[playlist].enqueue(sound)
+
+    def status(self, playlist=None):
+        if playlist is not None:
+            return self._playlists[playlist].status()
+        return super().status()
+
+    def get_playlists(self):
+        return self._playlists.keys()
+
+    def delete_playlist(self, playlist):
+        self._playlists[playlist].stop()
+        del self._playlists[playlist]
+
+    def play(self, playlist=None):
+        if playlist is not None:
+            return self._playlists[playlist].play()
+        else:
+            for pl in self._playlists.values():
+                if pl.status() != STATUS.PLAYING:
+                    pl.play()
+            super().play()
+
+    def pause(self, playlist=None):
+        if playlist is not None:
+            return self._playlists[playlist].pause()
+        else:
+            for pl in self._playlists.values():
+                if pl.status() != STATUS.PAUSED:
+                    pl.pause()
+            super().pause()
+
+    def stop(self, playlist=None):
+        if playlist is not None:
+            return self._playlists[playlist].stop()
+        else:
+            for pl in self._playlists.values():
+                if pl.status() != STATUS.STOPPED:
+                    pl.stop()
+            super().stop()
+
+player = SoundPlayer()
+player.enqueue(Sound(AudioSegment.from_wav("coin.wav")), 1)
+player.enqueue(Sound(AudioSegment.from_ogg("music.ogg")), 1)
+player.enqueue(Sound(AudioSegment.from_wav("coin.wav")), 1)
+
+player.play()
+time.sleep(5)
+player.enqueue(Sound(AudioSegment.from_wav("coin.wav")), 2)
+player.enqueue(Sound(AudioSegment.from_wav("coin.wav")), 2)
+time.sleep(50)
