@@ -13,7 +13,8 @@ class ProxyClass(object):
     def _ensure_object_class(self):
         object_class = self._object_class
         if object_class is None:
-            module = "pyproxy.platforms.{}.{}".format(
+            module = "{}.platforms.{}.{}".format(
+                self.__module__.split(".", 1)[0],
                 self._platform,
                 self._facade_class.__module__.split("facades.", 1)[-1]
             )
