@@ -14,7 +14,7 @@ class ProxyClass(object):
         object_class = self._object_class
         if object_class is None:
             module = "{}.platforms.{}.{}".format(
-                self.__module__.split(".", 1)[0],
+                self.__module__.rsplit(".", 1)[0],
                 self._platform,
                 self._facade_class.__module__.split("facades.", 1)[-1]
             )
