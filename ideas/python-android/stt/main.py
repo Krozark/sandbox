@@ -11,6 +11,8 @@ from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
 from plyer.utils import platform
 
+from functools import partial
+
 logger = logging.getLogger(__name__)
 
 if platform == "android":
@@ -21,6 +23,10 @@ if platform == "android":
 
     Model = autoclass("org.vosk.Model")
     Recognizer = autoclass('org.vosk.Recognizer')
+    Recognizer.AcceptWaveform = lambda self, data: self.acceptWaveForm(data, len(data))
+    Recognizer.Result = lambda self: self.getResult()
+    Recognizer.PartialResult = lambda self: self.getPartialResult()
+    Recognizer.FinalResult = lambda self: self.getFinalResult()
 
 
     # import org.vosk.LibVosk;
@@ -101,6 +107,8 @@ class Speech2TextDemo(BoxLayout):
 
         model = Model("data/model")
         rec = Recognizer(model, wf.getframerate())
+
+        print(dir(rec))
 
         while True:
             data = wf.readframes(4000)

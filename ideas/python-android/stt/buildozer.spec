@@ -7,7 +7,7 @@ title = KvTest
 package.name = KvTest
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.test
+package.domain = org.krozark
 
 # (str) Source code where the main.py live
 source.dir = .
@@ -211,8 +211,8 @@ android.add_gradle_repositories = "mavenCentral()", "maven { url 'https://alphac
 #android.manifest.launch_mode = standard
 
 # (list) Android additional libraries to copy into libs/armeabi
-#android.add_libs_armeabi = libs/android/*.so
-#android.add_libs_armeabi_v7a = libs/android-v7/*.so
+# android.add_libs_armeabi = libs/android/*.so
+android.add_libs_armeabi_v7a = libs/android-v7/*.so
 #android.add_libs_arm64_v8a = libs/android-v8/*.so
 #android.add_libs_x86 = libs/android-x86/*.so
 #android.add_libs_mips = libs/android-mips/*.so
