@@ -120,7 +120,7 @@ dependencies {
     //     //implementation 'net.java.dev.jna:jna:5.8.0@aar'
     //     //implementation 'net.java.dev.jna:jna:4.4.0@aar'
     // android
-//     implementation 'androidx.appcompat:appcompat:1.2.0'
+     implementation 'androidx.appcompat:appcompat:1.2.0'
 //     implementation 'net.java.dev.jna:jna:5.8.0@aar'
 //     implementation group: 'com.alphacephei', name: 'vosk-android', version: '0.3.23'
     // pc
