@@ -185,7 +185,7 @@ android.sdk = 29
 # please enclose in double quotes 
 # e.g. android.gradle_repositories = "maven { url 'https://kotlin.bintray.com/ktor' }"
 #android.add_gradle_repositories =
-#android.add_gradle_repositories = "mavenCentral()", "maven { url 'https://alphacephei.com/maven/' }"
+android.add_gradle_repositories = "mavenCentral()", "maven { url 'https://alphacephei.com/maven/' }"
 
 # (list) packaging options to add 
 # see https://google.github.io/android-gradle-dsl/current/com.android.build.gradle.internal.dsl.PackagingOptions.html

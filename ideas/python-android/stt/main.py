@@ -19,8 +19,8 @@ if platform == "android":
     # TextToSpeech = autoclass('android.speech.tts.TextToSpeech')
     # PythonActivity = autoclass('org.kivy.android.PythonActivity')
 
-    #Model = autoclass("org.vosk.Model")
-    #Recognizer = autoclass('org.vosk.Recognizer')
+    Model = autoclass("org.vosk.Model")
+    Recognizer = autoclass('org.vosk.Recognizer')
 
 
     # import org.vosk.LibVosk;
