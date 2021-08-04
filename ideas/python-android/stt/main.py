@@ -10,7 +10,12 @@ from kivy.core.audio import SoundLoader
 from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
 
-from stt.vosk_wrapper import Model, Recognizer
+from wrappervosk import (
+        Model,
+        #SpkModel,
+        KaldiRecognizer,
+        #SetLogLevel
+)
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +82,7 @@ class Speech2TextDemo(BoxLayout):
             exit(1)
 
         model = Model("data/model")
-        rec = Recognizer(model, wf.getframerate())
+        rec = KaldiRecognizer(model, wf.getframerate())
 
         print(dir(rec))
 

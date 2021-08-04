@@ -38,7 +38,7 @@ version = 1.0
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,plyer,pyjnius
+requirements = python3,kivy,plyer,pyjnius,cffi
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -169,14 +169,14 @@ android.sdk = 29
 
 # (list) Gradle dependencies to add
 #android.gradle_dependencies =
-android.gradle_dependencies = "androidx.appcompat:appcompat:1.2.0", \
-                              "net.java.dev.jna:jna:5.7.0", \
-                              "com.alphacephei:vosk:0.3.30"
+#android.gradle_dependencies = "androidx.appcompat:appcompat:1.2.0", \
+#                              "net.java.dev.jna:jna:5.7.0", \
+#                              "com.alphacephei:vosk:0.3.30"
 
 # (bool) Enable AndroidX support. Enable when 'android.gradle_dependencies'
 # contains an 'androidx' package, or any package from Kotlin source.
 # android.enable_androidx requires android.api >= 28
-android.enable_androidx = True
+#android.enable_androidx = True
 
 # (list) add java compile options
 # this can for example be necessary when importing certain java libraries using the 'android.gradle_dependencies' option
@@ -187,9 +187,9 @@ android.enable_androidx = True
 # please enclose in double quotes 
 # e.g. android.gradle_repositories = "maven { url 'https://kotlin.bintray.com/ktor' }"
 #android.add_gradle_repositories =
-android.add_gradle_repositories = "mavenCentral()", \
-                                  "maven { url 'https://alphacephei.com/maven/' }",
-                                  "maven { url 'https://mvnrepository.com/artifact/net.java.dev.jna/jna'}"
+#android.add_gradle_repositories = "mavenCentral()", \
+#                                  "maven { url 'https://alphacephei.com/maven/' }",
+#                                  "maven { url 'https://mvnrepository.com/artifact/net.java.dev.jna/jna'}"
 
 # (list) packaging options to add 
 # see https://google.github.io/android-gradle-dsl/current/com.android.build.gradle.internal.dsl.PackagingOptions.html
@@ -216,10 +216,10 @@ android.add_gradle_repositories = "mavenCentral()", \
 
 # (list) Android additional libraries to copy into libs/armeabi
 # android.add_libs_armeabi = libs/android/*.so
-android.add_libs_armeabi_v7a = libs/armeabi_v7a/*.so
-android.add_libs_arm64_v8a = libs/armeabi_v8a/*.so
-android.add_libs_x86 = libs/x86/*.so
-android.add_libs_x86_64 = libs/x86_64/*.so
+android.add_libs_armeabi_v7a = %(source.dir)s/libs/armeabi-v7a/*.so
+android.add_libs_arm64_v8a = %(source.dir)s/libs/armeabi-v8a/*.so
+android.add_libs_x86 = %(source.dir)s/libs/x86/*.so
+android.add_libs_x86_64 = %(source.dir)s/libs/x86_64/*.so
 #android.add_libs_mips = libs/android-mips/*.so
 
 # (bool) Indicate whether the screen should stay on
