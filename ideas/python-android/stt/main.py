@@ -17,6 +17,10 @@ from wrappervosk import (
         #SetLogLevel
 )
 
+from microphone import AndroidMicrophoneEngine
+
+from plyer import audio
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,6 +50,11 @@ Builder.load_string('''
             on_press: root.do_read()
         
         Button:
+            text: 'File STT'
+            size_hint_y: 0.2
+            on_press: root.do_file_stt()
+            
+        Button:
             text: 'STT'
             size_hint_y: 0.2
             on_press: root.do_stt()
@@ -55,6 +64,7 @@ Builder.load_string('''
 class Speech2TextDemo(BoxLayout):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.audio = None
 
     def do_list_dir(self):
         p = self.ids.path_text.text
@@ -74,7 +84,7 @@ class Speech2TextDemo(BoxLayout):
             print("Sound is %.3f seconds" % sound.length)
             sound.play()
 
-    def do_stt(self):
+    def do_file_stt(self):
         wf = wave.open('data/sound.wav', "rb")
 
         if wf.getnchannels() != 1 or wf.getsampwidth() != 2 or wf.getcomptype() != "NONE":
@@ -107,9 +117,20 @@ class Speech2TextDemo(BoxLayout):
         print(res)
         self.ids.notification_text.text += "\n" + res['text']
 
+    # def do_stt(self):
+    #     mic = AndroidMicrophoneEngine()
+    #     mic.start()
+    #     stream = mic.create_stream()
 
+    def do_stt(self):
+        self.audio = audio
+        self.audio.start()
+
+
+from android.permissions import request_permissions,Permission
 class MainApp(App):
     def build(self):
+        request_permissions([Permission.RECORD_AUDIO])
         return Speech2TextDemo()
 
     def on_pause(self):
