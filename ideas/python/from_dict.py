@@ -20,7 +20,7 @@ class _FromDictMixin:
     def from_dict(self, d: dict, current_depth: str = "") -> None:
         for k, v in d.items():
             if isinstance(v, str):
-                pattern = r"env\((?P<var_name>[A-Z_]+\s*(,\s*(?P<default>[\w.]+))?)\)"
+                pattern = r"env\((?P<var_name>[A-Z_]+)(\s*,\s*(?P<default>[\w.-]+))?\)"
                 match = regex.match(pattern, v)
                 if match:
                     logger.debug(
