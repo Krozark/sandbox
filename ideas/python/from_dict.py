@@ -17,16 +17,16 @@ class _FromDictMixin:
     """
     fields_required = []
 
-    def from_dict(self, d: dict, current_depth=""):
+    def from_dict(self, d: dict, current_depth: str = "") -> None:
         for k, v in d.items():
-            # add support for env(VAR_NAME)
             if isinstance(v, str):
-                match = regex.match(r"env\((?P<var_name>[A-Z_]+)\)", v)
+                pattern = r"env\((?P<var_name>[A-Z_]+\s*(,\s*(?P<default>[\w.]+))?)\)"
+                match = regex.match(pattern, v)
                 if match:
                     logger.debug(
                         "key %s is an env var. Getting it" % current_depth + "." + k
                     )
-                    v = os.getenv(match.group("var_name"), None)
+                    v = os.getenv(match.group("var_name"), match.group("default"))
             if hasattr(self, f"set_{k}"):
                 # has set_XXX(), then call it
                 func = getattr(self, f"set_{k}")
@@ -39,6 +39,7 @@ class _FromDictMixin:
                 else:
                     setattr(self, k, v)
         self.validate(current_depth=current_depth)
+
 
     def validate(self, current_depth=""):
         errors = []
