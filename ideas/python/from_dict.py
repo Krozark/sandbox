@@ -1,3 +1,5 @@
+import regex 
+
 class _FromDictMixin:
     """
     usage:
@@ -17,6 +19,14 @@ class _FromDictMixin:
 
     def from_dict(self, d: dict, current_depth=""):
         for k, v in d.items():
+            # add support for env(VAR_NAME)
+            if isinstance(v, str):
+                match = regex.match(r"env\((?P<var_name>[A-Z_]+)\)", v)
+                if match:
+                    logger.debug(
+                        "key %s is an env var. Getting it" % current_depth + "." + k
+                    )
+                    v = os.getenv(match.group("var_name"), None)
             if hasattr(self, f"set_{k}"):
                 # has set_XXX(), then call it
                 func = getattr(self, f"set_{k}")
