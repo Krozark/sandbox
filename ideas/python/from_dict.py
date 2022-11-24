@@ -6,16 +6,18 @@ class _FromDictMixin:
     class A(_FromDictMixin):
         field1 = None
         field2 = "default"
-        fields_required = ["field1"]
-        
+        field3 = "default3"
+        fields_required = ["field1", ("field2", "field3)] # field 1 is required, and at least one of field2 or field3
+
         def set_field1(self, value): # optional
            # make some check
            self.field1 = value
-        
+
         def validate(self, current_depth=""): # thi si is optional
-            # place your code de validate all field    
+            # place your code de validate all field
     """
-    fields_required = []
+
+    fields_required: List[str] = []
 
     def from_dict(self, d: dict, current_depth: str = "") -> None:
         for k, v in d.items():
@@ -40,15 +42,29 @@ class _FromDictMixin:
                     setattr(self, k, v)
         self.validate(current_depth=current_depth)
 
+    def is_valid(self) -> bool:
+        for field in self.fields_required:
+            res = None
+            if isinstance(field, str):
+                res = getattr(self, field, None)
+            elif isinstance(field, (tuple, list)):
+                for f in field:
+                    res |= getattr(self, f, None)
+            if not res:
+                return False
+        return True
 
-    def validate(self, current_depth=""):
+    def validate(self, current_depth: str = "") -> None:
         errors = []
         for field in self.fields_required:
             value = getattr(self, field, None)
-            if value is None:
+            if not value:
                 errors.append(field)
         if errors:
             fields = ", ".join(errors)
             msg = f"In '{current_depth}' configuration, mandatory fields '{fields}' are missing"
             logger.error(msg)
             raise ValueError(msg)
+
+    def __repr__(self) -> str:
+        return str(self.__dict__)
