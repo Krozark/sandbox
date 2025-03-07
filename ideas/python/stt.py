@@ -249,4 +249,5 @@ def microphone(audio_queue, shutdown_event):
 
 
 if __name__ == "__main__":
+    with_faster_whisper()
     with_faster_whisper_and_microphone()
