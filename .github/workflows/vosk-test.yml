@@ -1,0 +1,182 @@
+name: vosk-test
+
+# Checks that `import vosk` works in the same Kivy app (ideas/python-android/vosk-test) on every
+# platform, with the Vosk fork (Krozark/vosk-api master): iOS simulator, Android emulator, Linux and
+# Windows.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ideas/python-android/vosk-test/**'
+      - '.github/workflows/vosk-test.yml'
+
+env:
+  APP_DIR: ideas/python-android/vosk-test
+
+jobs:
+  ios:
+    name: iOS Simulator
+    runs-on: macos-latest
+    env:
+      APP_DIR: ${{ github.workspace }}/ideas/python-android/vosk-test
+      BUILD_DIR: ${{ github.workspace }}/build
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Krozark/vosk-api
+          path: vosk-api
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install build tools
+        run: |
+          brew install autoconf automake libtool pkg-config
+          pip install kivy-ios cython
+
+      - name: Build libvosk.xcframework (simulator slice)
+        run: SLICES=simulator vosk-api/ios/build_libvosk.sh "$BUILD_DIR/libvosk"
+
+      - name: Download the small English model
+        working-directory: ${{ env.APP_DIR }}
+        run: ci/fetch_model.sh
+
+      # kivy-ios only lists its bundled recipes when it fills the Xcode project (Recipe.list_recipes):
+      # recipes given with --add-custom-recipe are built but their libraries are never linked into
+      # the app. Installing ours next to the bundled ones avoids that.
+      - name: Install the custom recipes into kivy-ios
+        run: |
+          recipes_dir="$(python -c 'import kivy_ios, os; print(os.path.join(os.path.dirname(kivy_ios.__file__), "recipes"))')"
+          cp -R "$APP_DIR"/ios/recipes/* "$recipes_dir/"
+
+      - name: Build the kivy-ios distribution
+        working-directory: ${{ env.BUILD_DIR }}
+        env:
+          LIBVOSK_XCFRAMEWORK: ${{ env.BUILD_DIR }}/libvosk/libvosk.xcframework
+        run: toolchain build python3 kivy cffi vosk --platform iphonesimulator-arm64
+
+      - name: Create the Xcode project and build the app
+        working-directory: ${{ env.BUILD_DIR }}
+        run: |
+          toolchain create VoskTest "$APP_DIR"
+          xcodebuild -project vosktest-ios/vosktest.xcodeproj -scheme vosktest \
+            -sdk iphonesimulator -configuration Debug -derivedDataPath derived \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO build
+
+      - name: Run in the iOS Simulator
+        run: |
+          app="$(find "$BUILD_DIR/derived" -name '*.app' -path '*iphonesimulator*' | head -1)"
+          "$APP_DIR/ios/smoke_test.sh" "$app" "$BUILD_DIR/out"
+
+      - name: Upload screenshot and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vosk-test-ios
+          path: build/out/
+
+  android:
+    name: Android emulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y build-essential ccache git unzip zip autoconf automake libtool \
+            libltdl-dev pkg-config gettext autopoint zlib1g-dev libncurses-dev libffi-dev libssl-dev cmake
+          pip install buildozer cython==0.29.33 wheel
+
+      - name: Fetch libvosk.so built by the vosk-api fork (every ABI)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: $APP_DIR/ci/fetch_vosk_binaries.sh vosk-android "$RUNNER_TEMP/libvosk-android"
+
+      - name: Download the small English model
+        working-directory: ${{ env.APP_DIR }}
+        run: ci/fetch_model.sh
+
+      - name: Build the APK (x86_64, the emulator ABI)
+        working-directory: ${{ env.APP_DIR }}
+        env:
+          LIBVOSK_ANDROID_DIR: ${{ runner.temp }}/libvosk-android
+        run: buildozer --profile emulator android debug
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run on the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          working-directory: ${{ env.APP_DIR }}
+          script: ci/android_smoke_test.sh bin/*.apk out
+
+      - name: Upload screenshot and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vosk-test-android
+          path: ${{ env.APP_DIR }}/out/
+
+  desktop:
+    name: Desktop ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: linux-x86_64
+            runner: ubuntu-latest
+            artifact: vosk-linux-x86_64
+            wheel: '*manylinux*.whl'
+          - os: windows-x64
+            runner: windows-latest
+            artifact: vosk-windows-x64
+            wheel: '*win_amd64.whl'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch the vosk wheel built by the vosk-api fork
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: $APP_DIR/ci/fetch_vosk_binaries.sh ${{ matrix.artifact }} "$RUNNER_TEMP/wheelhouse"
+
+      - name: Install kivy and the vosk wheel
+        run: pip install kivy "$(ls "$RUNNER_TEMP"/wheelhouse/${{ matrix.wheel }} | head -1)"
+
+      - name: Download the small English model
+        working-directory: ${{ env.APP_DIR }}
+        run: ci/fetch_model.sh
+
+      - name: Transcribe the test file
+        working-directory: ${{ env.APP_DIR }}
+        env:
+          KIVY_NO_ARGS: '1'
+        run: python ci/desktop_check.py | ci/check_result.sh

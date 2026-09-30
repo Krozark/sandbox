@@ -27,5 +27,5 @@ kivy-ios only lists its *bundled* recipes when it fills the Xcode project, so th
 copied into the installed `kivy_ios/recipes` before `toolchain build` (`--add-custom-recipe` builds them
 but never links them into the app).
 
-Built and run by `.github/workflows/vosk-test-ios.yml` (macOS runner, no Mac needed locally).
+Built and run by the `ios` job of `.github/workflows/vosk-test.yml` (macOS runner, no Mac needed locally).
 The screenshot and the logs are the `vosk-test-ios` artifact of the run.
