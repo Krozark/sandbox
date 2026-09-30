@@ -63,7 +63,7 @@ jobs:
           toolchain create VoskTest "$APP_DIR"
           xcodebuild -project vosktest-ios/vosktest.xcodeproj -scheme vosktest \
             -sdk iphonesimulator -configuration Debug -derivedDataPath derived \
-            CODE_SIGNING_ALLOWED=NO build
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO build
 
       - name: Run in the iOS Simulator
         run: |
