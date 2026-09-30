@@ -3,8 +3,8 @@ title = VoskTest
 package.name = vosktest
 package.domain = org.krozark
 source.dir = .
-source.include_exts = py,wav
-source.include_patterns = data/*,data/**/*
+# No include_exts: buildozer applies it even to files matched by include_patterns, which would
+# drop the model's .mdl/.fst/.conf files. Everything except the excluded folders is packaged.
 source.exclude_dirs = android, ci, ios, bin
 version = 1.0
 requirements = python3,kivy,vosk
