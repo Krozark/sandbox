@@ -20,7 +20,13 @@ def transcribe(model_dir, wav_path):
         parent = os.path.dirname(model_dir)
         found = os.listdir(parent) if os.path.isdir(parent) else "no such directory"
         raise FileNotFoundError(f"vosk model not found: {model_dir} (in {parent}: {found})")
-    model = Model(model_dir)
+    try:
+        model = Model(model_dir)
+    except Exception as error:
+        # Kaldi only logs to stderr: report what the model folder really holds
+        files = sorted(os.path.relpath(os.path.join(root, name), model_dir)
+                       for root, _, names in os.walk(model_dir) for name in names)
+        raise RuntimeError(f"{error}: {model_dir} holds {len(files)} files: {files}") from error
     with wave.open(wav_path, "rb") as wav:
         recognizer = KaldiRecognizer(model, wav.getframerate())
         while True:
