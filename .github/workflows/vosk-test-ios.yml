@@ -6,7 +6,11 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'ideas/python-android/vosk-test/**'
+      - 'ideas/python-android/vosk-test/ios/**'
+      - 'ideas/python-android/vosk-test/main.py'
+      - 'ideas/python-android/vosk-test/data/**'
+      - 'ideas/python-android/vosk-test/ci/check_result.sh'
+      - 'ideas/python-android/vosk-test/ci/fetch_vosk_binaries.sh'
       - '.github/workflows/vosk-test-ios.yml'
 
 env:

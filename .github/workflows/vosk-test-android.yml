@@ -1,0 +1,82 @@
+name: vosk-test Android
+
+# Builds ideas/python-android/vosk-test with buildozer/python-for-android using the Vosk fork
+# (libvosk.so built by the fork's CI, Python binding from its master) and runs it on an emulator.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ideas/python-android/vosk-test/android/**'
+      - 'ideas/python-android/vosk-test/buildozer.spec'
+      - 'ideas/python-android/vosk-test/ci/android_smoke_test.sh'
+      - 'ideas/python-android/vosk-test/main.py'
+      - 'ideas/python-android/vosk-test/data/**'
+      - 'ideas/python-android/vosk-test/ci/check_result.sh'
+      - 'ideas/python-android/vosk-test/ci/fetch_vosk_binaries.sh'
+      - '.github/workflows/vosk-test-android.yml'
+
+env:
+  APP_DIR: ideas/python-android/vosk-test
+
+jobs:
+  android-emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y build-essential ccache git unzip zip autoconf automake libtool \
+            libltdl-dev pkg-config gettext autopoint zlib1g-dev libncurses-dev libffi-dev libssl-dev cmake
+          pip install buildozer cython==0.29.33 wheel
+
+      - name: Fetch libvosk.so built by the vosk-api fork (every ABI)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: $APP_DIR/ci/fetch_vosk_binaries.sh vosk-android "$RUNNER_TEMP/libvosk-android"
+
+      - name: Download the small English model
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          curl -fsSL https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip -o model.zip
+          unzip -q model.zip
+          mv vosk-model-small-en-us-0.15 data/model
+          rm model.zip
+
+      - name: Build the APK (x86_64, the emulator ABI)
+        working-directory: ${{ env.APP_DIR }}
+        env:
+          LIBVOSK_ANDROID_DIR: ${{ runner.temp }}/libvosk-android
+        run: buildozer --profile emulator android debug
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run on the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          working-directory: ${{ env.APP_DIR }}
+          script: ci/android_smoke_test.sh bin/*.apk out
+
+      - name: Upload screenshot and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vosk-test-android
+          path: ${{ env.APP_DIR }}/out/
