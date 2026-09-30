@@ -48,14 +48,19 @@ jobs:
           mv vosk-model-small-en-us-0.15 data/model
           rm model.zip
 
+      # kivy-ios only lists its bundled recipes when it fills the Xcode project (Recipe.list_recipes):
+      # recipes given with --add-custom-recipe are built but their libraries are never linked into
+      # the app. Installing ours next to the bundled ones avoids that.
+      - name: Install the custom recipes into kivy-ios
+        run: |
+          recipes_dir="$(python -c 'import kivy_ios, os; print(os.path.join(os.path.dirname(kivy_ios.__file__), "recipes"))')"
+          cp -R "$APP_DIR"/ios/recipes/* "$recipes_dir/"
+
       - name: Build the kivy-ios distribution
         working-directory: ${{ env.BUILD_DIR }}
         env:
           LIBVOSK_XCFRAMEWORK: ${{ env.BUILD_DIR }}/libvosk/libvosk.xcframework
-        run: |
-          toolchain build python3 kivy cffi vosk --platform iphonesimulator-arm64 \
-            --add-custom-recipe "$APP_DIR/ios/recipes/cffi" \
-            --add-custom-recipe "$APP_DIR/ios/recipes/vosk"
+        run: toolchain build python3 kivy cffi vosk --platform iphonesimulator-arm64
 
       - name: Create the Xcode project and build the app
         working-directory: ${{ env.BUILD_DIR }}

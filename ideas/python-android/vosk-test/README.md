@@ -23,5 +23,9 @@ unzip -q vosk-model-small-en-us-0.15.zip && mv vosk-model-small-en-us-0.15 data/
   libvosk comes from vosk-api's `ios/build_libvosk.sh` (path given in `LIBVOSK_XCFRAMEWORK`).
 - `ios/smoke_test.sh`: runs the built app in an iOS Simulator and checks the transcription.
 
+kivy-ios only lists its *bundled* recipes when it fills the Xcode project, so the recipes above are
+copied into the installed `kivy_ios/recipes` before `toolchain build` (`--add-custom-recipe` builds them
+but never links them into the app).
+
 Built and run by `.github/workflows/vosk-test-ios.yml` (macOS runner, no Mac needed locally).
 The screenshot and the logs are the `vosk-test-ios` artifact of the run.
